@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set -e
+
+helpstr="\
+NAME
+    rt.merge - merge two RT tickets
+
+SYNOPSIS
+    rt.merge TICKET1 TICKET2
+
+DESCRIPTION
+    Merge TICKET1 into TICKET2.  By default, this will ask for confirmation, 
+    after displaying some info about each ticket.
+
+OPTIONS
+    -c, --confirm yes|no
+        Whether or not to confirm before merging.
+        Default is yes.
+
+    -h, --help
+        Print this help.
+
+REQUIREMENTS
+    rt cli
+
+AUTHOR
+    John Brunelle
+"
+
+confirm=true
+
+prefix=''  #set to echo intead of running, set to empty string for normal operation
+
+args=$(getopt -l confirm:,help -o c:h -- "$@")
+if [ $? -ne 0 ]; then
+	exit 65  #(getopt will have written the error message)
+fi
+eval set -- "$args"
+while [ ! -z "$1" ]; do
+	case "$1" in
+		-c | --confirm)
+			if   [ "$2" = 'yes' ]; then
+				confirm=true
+			elif [ "$2" = 'no' ]; then
+				confirm=false
+			else
+				echo "*** ERROR *** -c/--confirm must be yes or no" >&2
+				exit 1
+			fi
+			shift
+			;;
+
+		-h | --help)
+			echo -n "$helpstr"
+			exit 0
+			;;
+		--) 
+			shift
+			break
+			;;
+	esac
+	shift
+done
+
+if ! which rt &> /dev/null; then
+	echo -n "*** ERROR *** rt command not found" >&2
+	[[ "$(hostname -f)" == *.rc.fas.harvard.edu ]] && echo -n " (module load hpc/rt)" >&2
+	echo >&2
+	exit 1
+fi
+
+set -u
+
+#---
+
+ask () {
+	! $confirm && return 0
+	prompt="$1"  #(don't include question mark, y/n, or trailing whitespace)
+	read -p "$prompt [y/n]? " answer
+	[[ "$answer" == y* ]] || [[ "$answer" == Y* ]]
+	return $?
+}
+
+tidsource="$1"
+tidtarget="$2"
+
+echo "$tidsource"
+echo '---'
+rt show ticket/"$tidsource" -f Requestors,Subject,Owner | grep -v '^id: ticket' | rt.realnames
+echo
+echo "$tidtarget"
+echo '---'
+rt show ticket/"$tidtarget" -f Requestors,Subject,Owner | grep -v '^id: ticket' | rt.realnames
+echo
+if ask "merge ticket $tidsource into $tidtarget"; then
+	$prefix rt merge "$tidsource" "$tidtarget"
+fi

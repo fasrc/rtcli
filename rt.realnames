@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+
+"""\
+NAME
+    rt.realnames - substitute email addresses with realnames
+
+SYNOPSIS
+    SOME_OTHER_RT_COMMAND | rt.realnames
+
+DESCRIPTION
+    Replaces \`Request: EMAIL' with \`Requestor: NAME'.  Tries email2name to 
+    look up the name (it's faster than rt), but if that doesn't work, actually 
+    looks it up in rt.
+
+OPTIONS
+    -a, --add
+        Add to the Requestor field, keeping the email address too, rather than 
+        replacing it.
+
+    -h, --help
+        Print this help.
+
+REQUIREMENTS
+    rt cli
+    email2name (optional; FAS RC internal)
+
+AUTHOR
+    John Brunelle
+"""
+
+import sys, getopt, subprocess
+
+add = False
+
+try:
+	opts, args = getopt.gnu_getopt(sys.argv[1:], 'ah', ('add', 'help',))
+except getopt.GetoptError, e:
+	sys.stderr.write("*** ERROR **** unable to process command line options: %s\n" % e)
+	sys.exit(1)
+for opt, optarg in opts:
+	if   opt in ('-a', '--add'):
+		add = True
+	elif opt in ('-h', '--help'):
+		sys.stdout.write(__doc__)
+		sys.exit(0)
+
+if sys.stdin.isatty():
+	sys.stderr.write("*** ERROR *** this script is only meant to be used in a pipeline\n")
+	sys.exit(1)
+
+#--
+
+files = []
+for f in args:
+	files.append(f.open())
+if len(files)==0: files.append(sys.stdin)
+	
+for f in files:
+	for line in f:
+		if line.startswith('Requestors:'):
+			try:
+				email = line.split(':',1)[1].strip()
+				email = email.split(',',1)[0].strip()
+				
+				#first try email2name
+				sh = "email2name '%s'" % email
+				p = subprocess.Popen(
+					sh,
+					shell=True,
+					stdin=open('/dev/null', 'r'),
+					stdout=subprocess.PIPE,
+					stderr=subprocess.PIPE
+				)
+				stdout, stderr = p.communicate()
+				if p.returncode==0 and stderr=='':
+					realname = stdout.strip()
+				else:
+					#that failed, hit rt directly
+					sh = "rt show user/'%s' | grep RealName" % email
+					p = subprocess.Popen(
+						sh,
+						shell=True,
+						stdin=open('/dev/null', 'r'),
+						stdout=subprocess.PIPE,
+						stderr=subprocess.PIPE
+					)
+					stdout, stderr = p.communicate()
+					if p.returncode!=0 or stderr!='': raise ValueError("unable to look up RealName for email [%s]" % email)
+					realname = stdout.split(':',1)[1].strip()
+				if add:
+					sys.stdout.write('Requestors: %s <%s>\n' % (realname, email))
+				else:
+					sys.stdout.write('Requestors: %s\n' % realname)
+			except ValueError:
+				raise
+				#bail out and just echo the original line
+				sys.stdout.write(line)
+		else:
+			sys.stdout.write(line)

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -e
+
+helpstr="\
+NAME
+    rt.show - show ticket details
+
+SYNOPSIS
+    rt.show TICKET...
+
+DESCRIPTION
+    n/a
+
+OPTIONS
+    -h, --help
+        Print this help.
+
+REQUIREMENTS
+    rt cli
+
+AUTHOR
+    John Brunelle
+"
+
+if getopt -q -l help -o h -- "$@" | egrep -q '^ -h|^ --help'; then echo -n "$helpstr"; exit; fi
+
+if ! which rt &> /dev/null; then
+	echo -n "*** ERROR *** rt command not found" >&2
+	[[ "$(hostname -f)" == *.rc.fas.harvard.edu ]] && echo -n " (module load hpc/rt)" >&2
+	echo >&2
+	exit 1
+fi
+
+set -u
+
+#---
+
+for tid in "$@"; do
+	echo "$tid"
+	echo '-----'
+	rt show ticket/"$tid" -f Requestors,Subject,Owner,Status,Priority,Created,LastUpdated | grep -v '^id: ticket' | rt.realnames --add
+	id4content="$(rt show ticket/"$tid"/history | awk 'NR==3 {print $0}' | awk -F: '{print $1}')"
+	rt show ticket/"$tid"/history/id/"$id4content" -f Content | grep -A 999999999 Content
+	echo
+done
