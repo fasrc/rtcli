@@ -17,6 +17,9 @@ OPTIONS
     -s, --status STATUS
         Set the ticket's status to the given STATUS.
 
+    -p, --priority PRIORITY
+        Set the ticket's priority to the given PRIORITY.
+
     -c, --confirm yes|no
         Whether or not to confirm before merging.
         Default is yes.
@@ -32,11 +35,12 @@ AUTHOR
 "
 
 status=''
+priority=''
 confirm=true
 
 prefix=''  #set to echo intead of running, set to empty string for normal operation
 
-args=$(getopt -l status:,confirm:,help -o s:c:h -- "$@")
+args=$(getopt -l status:,priority:,confirm:,help -o s:p:c:h -- "$@")
 if [ $? -ne 0 ]; then
 	exit 65  #(getopt will have written the error message)
 fi
@@ -47,6 +51,10 @@ while [ ! -z "$1" ]; do
 			status="$2"
 			shift
 			#don't check possible status values, as new ones can be added to rt; let the command fail below
+			;;
+		-p | --priority)
+			priority="$2"
+			shift
 			;;
 		-c | --confirm)
 			if   [ "$2" = 'yes' ]; then
@@ -79,10 +87,10 @@ if ! which rt &> /dev/null; then
 	exit 1
 fi
 
-if [ -z "$status" ]; then
-	echo "*** ERROR *** must provide a --status" >&2
-	exit 1
-fi
+#if [ -z "$status" ]; then
+#	echo "*** ERROR *** must provide a --status" >&2
+#	exit 1
+#fi
 
 set -u
 
@@ -101,8 +109,15 @@ for tid in "$@"; do
 	echo '---'
 	rt show ticket/"$tid" -f Requestors,Subject,Owner | grep -v '^id: ticket' | rt.realnames
 	echo '---'
-	if ask "set status to $status"; then
-		$prefix rt edit ticket/"$tid" set status="$status"
+	if [ -n "$status" ]; then
+		if ask "set status to $status"; then
+			$prefix rt edit ticket/"$tid" set status="$status"
+		fi
+	fi
+	if [ -n "$priority" ]; then
+		if ask "set priority to $priority"; then
+			$prefix rt edit ticket/"$tid" set priority="$priority"
+		fi
 	fi
 	echo
 done

@@ -12,6 +12,9 @@ DESCRIPTION
     n/a
 
 OPTIONS
+    --history
+        Show the full history, not just the initial ticket text.
+
     -h, --help
         Print this help.
 
@@ -22,7 +25,30 @@ AUTHOR
     John Brunelle
 "
 
-if getopt -q -l help -o h -- "$@" | egrep -q '^ -h|^ --help'; then echo -n "$helpstr"; exit; fi
+history=false
+
+args=$(getopt -l history,help -o h -- "$@")
+if [ $? -ne 0 ]; then
+	exit 65  #(getopt will have written the error message)
+fi
+eval set -- "$args"
+while [ ! -z "$1" ]; do
+	case "$1" in
+		--history)
+			history=true
+			;;
+
+		-h | --help)
+			echo -n "$helpstr"
+			exit 0
+			;;
+		--) 
+			shift
+			break
+			;;
+	esac
+	shift
+done
 
 if ! which rt &> /dev/null; then
 	echo -n "*** ERROR *** rt command not found" >&2
@@ -39,7 +65,21 @@ for tid in "$@"; do
 	echo "$tid"
 	echo '-----'
 	rt show ticket/"$tid" -f Requestors,Subject,Owner,Status,Priority,Created,LastUpdated | grep -v '^id: ticket' | rt.realnames --add
-	id4content="$(rt show ticket/"$tid"/history | awk 'NR==3 {print $0}' | awk -F: '{print $1}')"
-	rt show ticket/"$tid"/history/id/"$id4content" -f Content | grep -A 999999999 Content
+
+	if $history; then
+		rt show ticket/"$tid"/history
+	else
+		##used to be able to pick out history entries by their id, the ###### numeric part of the txn-###### anchor tags in the gui, but they overall history no longer lists those
+		#id4content="$(rt show ticket/"$tid"/history | awk 'NR==3 {print $0}' | awk -F: '{print $1}')"
+		#rt show ticket/"$tid"/history/id/"$id4content" -f Content | grep -A 999999999 Content
+		
+		##this works instead
+		#subid=$(rt show ticket/32263/history -f Content | head -n 1 | grep -oP '(?<=id/)\d+(?=/total)')
+		#rt show ticket/"$tid"/history/id/"$subid"
+
+		#but this is just as good, also indents for easier reading, and faster since there is only one query (the tail and head stuff just strips junk and whitespace)
+		rt show ticket/"$tid"/history -f Content | grep -B 999999 '^id:' -m 1 | tail -n +3 | head -n -3
+	fi
+
 	echo
 done
