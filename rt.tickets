@@ -20,6 +20,12 @@ OPTIONS
         probably make the script take an order of magnitude longer to run take 
         an order of magnitude longer to run.
 
+    -e, --extra-clauses QUERY
+        Add the given QUERY to the rt ls command.  The given string is anded 
+        with the default query.  E.g.:
+
+            --extra-clauses \"Status != 'waiting' and Status != 'project' and Priority >= 1\"
+
     -h, --help
         Print this help.
 
@@ -32,8 +38,9 @@ AUTHOR
 "
 
 realnames=false
+extra_clauses=''
 
-args=$(getopt -l realnames,help -o h -- "$@")
+args=$(getopt -l realnames,extra-clauses:,help -o he: -- "$@")
 if [ $? -ne 0 ]; then
 	exit 65  #(getopt will have written the error message)
 fi
@@ -42,6 +49,10 @@ while [ ! -z "$1" ]; do
 	case "$1" in
 		--realnames)
 			realnames=true
+			;;
+		-e | --extra-clauses)
+			extra_clauses="$2"
+			shift
 			;;
 
 		-h | --help)
@@ -79,4 +90,7 @@ else
 	cmd=cat
 fi
 
-rt ls -i "Owner='$USER' and Status != 'resolved'" | rt show - -f id,Status,Priority,Requestors,Subject  | sed 's?^id: ticket/?id: ?' | sed '/^Requestors/ s/,.*$/,.../' | $cmd | tablify
+qry="Owner='$USER' and Status != 'resolved'"
+test -n "$extra_clauses" && qry="$qry and $extra_clauses"
+
+rt ls -i "$qry" | rt show - -f id,Status,Priority,Requestors,Subject  | sed 's?^id: ticket/?id: ?' | sed '/^Requestors/ s/,.*$/,.../' | $cmd | tablify
