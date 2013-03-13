@@ -92,4 +92,5 @@ fi
 qry="Owner='$USER' and Status != 'resolved'"
 test -n "$extra_clauses" && qry="$qry and $extra_clauses"
 
-rt ls -i "$qry" | rt show - -f id,Status,Priority,Requestors,Subject  | sed 's?^id: ticket/?id: ?' | sed '/^Requestors/ s/,.*$/,.../' | $cmd | tablify
+#rt ls -i "$qry" | rt show - -f id,Status,Priority,Requestors,Subject  | sed 's?^id: ticket/?id: ?' | sed '/^Requestors/ s/,.*$/,.../' | $cmd | tablify
+rt ls -i "$qry" | xargs -r rt show -f id,Status,Priority,Requestors,Subject | sed 's?^id: ticket/?id: ?' | sed '/^Requestors/ s/,.*$/,.../' | $cmd | tablify
