@@ -20,10 +20,10 @@ OPTIONS
         probably make the script take an order of magnitude longer to run.
 
     -e, --extra-clauses QUERY
-        Add the given QUERY to the rt ls command.  The given string is anded 
+        Add the given QUERY to the rt ls command.  The given string is ANDed 
         with the default query.  E.g.:
 
-            --extra-clauses \"Status != 'waiting' and Status != 'project' and Priority >= 1\"
+            --extra-clauses \"Status != 'waiting' and ( priority = 1 or priority = 2 )\"
 
     -h, --help
         Print this help.
