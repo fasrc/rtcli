@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -e
+
+helpstr="\
+NAME
+    rt.new - create a new ticket
+
+SYNOPSIS
+    rt.new SUBJECT...
+
+DESCRIPTION
+    The requestor and owner are set to the current user; if the script 
+	username2email is present and works, these values are set to the email 
+	address of the current user rather than the current username.  (I don't 
+	know what happens if a plain username is supplied instead.)
+
+OPTIONS
+    -h, --help
+        Print this help.
+
+REQUIREMENTS
+    rt cli
+    username2email (optional; FAS RC internal)
+
+AUTHOR
+    John Brunelle
+"
+
+args=$(getopt -l aaa,bbb:,help -o ab:h -- "$@")
+if [ $? -ne 0 ]; then
+	exit 65  #(getopt will have written the error message)
+fi
+eval set -- "$args"
+while [ ! -z "$1" ]; do
+	case "$1" in
+		-a | --aaa)
+			aaa=true
+			;;
+		-b | --bbb)
+			bbb="$2"
+			shift
+			;;
+
+		-h | --help)
+			echo -n "$helpstr"
+			exit 0
+			;;
+		--) 
+			shift
+			break
+			;;
+	esac
+	shift
+done
+
+set -u
+
+
+#---
+
+
+if [ -z "$USER" ]; then
+	echo "*** ERROR *** unable to get username" >&2
+	exit 1
+fi
+
+set +e
+email=$(username2email "$USER" 2>/dev/null)
+set -e
+
+if [ -n "$email" ]; then
+	requestor="$email"
+	owner="$email"
+else
+	requestor="$USER"
+	owner="$USER"
+fi
+
+for subject in "$@"; do
+	rt create -t ticket set requestor="$requestor" owner="$owner" subject="$subject"
+done
