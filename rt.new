@@ -15,6 +15,9 @@ DESCRIPTION
 	know what happens if a plain username is supplied instead.)
 
 OPTIONS
+    -p, --priority PRIORITY
+        Set all tickets created to the given PRIORITY.
+
     -h, --help
         Print this help.
 
@@ -26,18 +29,17 @@ AUTHOR
     John Brunelle
 "
 
-args=$(getopt -l aaa,bbb:,help -o ab:h -- "$@")
+priority=0
+
+args=$(getopt -l priority:,help -o p:h -- "$@")
 if [ $? -ne 0 ]; then
 	exit 65  #(getopt will have written the error message)
 fi
 eval set -- "$args"
 while [ ! -z "$1" ]; do
 	case "$1" in
-		-a | --aaa)
-			aaa=true
-			;;
-		-b | --bbb)
-			bbb="$2"
+		-p | --priority)
+			priority="$2"
 			shift
 			;;
 
@@ -77,5 +79,5 @@ else
 fi
 
 for subject in "$@"; do
-	rt create -t ticket set requestor="$requestor" owner="$owner" subject="$subject"
+	rt create -t ticket set requestor="$requestor" owner="$owner" priority="$priority" subject="$subject"
 done
