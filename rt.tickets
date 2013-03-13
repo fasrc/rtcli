@@ -9,16 +9,15 @@ SYNOPSIS
     rt.tickets
 
 DESCRIPTION
-    Only the first Requestor is shown, but if there is more than one a ... is 
-    shown.  This uses tablify to make a table of the data; fields themselves 
+    Only the first Requestor is shown, but if there is more than one a \`...'
+    is shown.  This uses tablify to make a table of the data; fields themselves 
     are not truncated, but, if stdout is a tty, the overall lines are truncated 
     to the terminal width.
 
 OPTIONS
     --realnames
         Expand Requestor email addresses out to their full names.  This will 
-        probably make the script take an order of magnitude longer to run take 
-        an order of magnitude longer to run.
+        probably make the script take an order of magnitude longer to run.
 
     -e, --extra-clauses QUERY
         Add the given QUERY to the rt ls command.  The given string is anded 
