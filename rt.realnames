@@ -85,8 +85,12 @@ for f in files:
 						stderr=subprocess.PIPE
 					)
 					stdout, stderr = p.communicate()
-					if p.returncode!=0 or stderr!='': raise ValueError("unable to look up RealName for email [%s]" % email)
-					realname = stdout.split(':',1)[1].strip()
+					if p.returncode!=0 or stderr!='':
+						##using the email address is better than failing
+						#raise ValueError("unable to look up RealName for email [%s]" % email)
+						realname = email
+					else:
+						realname = stdout.split(':',1)[1].strip()
 				if add:
 					sys.stdout.write('Requestors: %s <%s>\n' % (realname, email))
 				else:
