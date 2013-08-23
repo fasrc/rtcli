@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -e
+
+helpstr="\
+NAME
+    rt.nobody - show a table of all recent tickets owned by Nobody
+
+SYNOPSIS
+    rt.nobody [QUERY...]
+
+DESCRIPTION
+    This is a thin wrapper for:
+        rt.table \"Owner=Nobody and Status!=resolved and Queue!=SPAM and LastUpdated>='-3 days' and Queue!=Documentation and Queue!=Network\"
+        
+    See rt.table -h for more info.
+
+    Any additional QUERYies given are ANDed with the default.
+
+OPTIONS
+    See rt.table -h
+
+REQUIREMENTS
+    rt cli
+
+AUTHOR
+    John Brunelle
+"
+
+rt.table "Owner=Nobody and Status!=resolved and Queue!=SPAM and LastUpdated>='-3 days' and Queue!=Documentation and Queue!=Network" "$@"  #conveniently, getopt accept options like --realnames even after an regular argument

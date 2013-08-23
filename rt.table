@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+set -e
+
+helpstr="\
+NAME
+    rt.table - show a table of rt tickets
+
+SYNOPSIS
+    rt.table QUERY...
+
+DESCRIPTION
+    QUERY is something like:
+        \"Owner=\$USER and Status!=resolved\"
+        \"Priority>=0 and Status!=waiting and Status!=project and Status!=pend_close\"
+        \"Owner=nobody and Status!=resolved and Created>'YYYY-MM-DD'\"
+
+    If multiple QUERY are given, they are ANDed together.
+
+    Only the first Requestor is shown, but if there is more than one a \`...'
+    is shown.  This uses tablify to make a table of the data; fields themselves 
+    are not truncated, but, if stdout is a tty, the overall lines are truncated 
+    to the terminal width.
+
+OPTIONS
+    --realnames
+        Expand Requestor email addresses out to their full names.  This will 
+        probably make the script take an order of magnitude longer to run.
+
+    -h, --help
+        Print this help.
+
+REQUIREMENTS
+    rt cli
+    tablify (https://raw.github.com/jabrcx/miscnix/master/bin/tablify)
+
+AUTHOR
+    John Brunelle
+"
+
+realnames=false
+
+args=$(getopt -l realnames,help -o h -- "$@")
+if [ $? -ne 0 ]; then
+	exit 65  #(getopt will have written the error message)
+fi
+eval set -- "$args"
+while [ ! -z "$1" ]; do
+	case "$1" in
+		--realnames)
+			realnames=true
+			;;
+
+		-h | --help)
+			echo -n "$helpstr"
+			exit 0
+			;;
+		--) 
+			shift
+			break
+			;;
+	esac
+	shift
+done
+
+if ! which rt &> /dev/null; then
+	echo -n "*** ERROR *** rt command not found" >&2
+	[[ "$(hostname -f)" == *.rc.fas.harvard.edu ]] && echo -n " (module load hpc/rt)" >&2
+	echo >&2
+	exit 1
+fi
+if ! which tablify &> /dev/null; then
+	echo -n "*** ERROR *** tablify command not found" >&2
+	[[ "$(hostname -f)" == *.rc.fas.harvard.edu ]] && echo -n " (module load hpc/rc)" >&2
+	echo >&2
+	exit 1
+fi
+
+set -u
+
+#---
+
+if $realnames; then
+	cmd=rt.realnames
+else
+	cmd=cat
+fi
+
+for qry in "$@"; do
+	rt ls -i "$qry" | xargs -r rt show -f id,Status,Priority,Requestors,Subject | sed 's?^id: ticket/?id: ?' | sed '/^Requestors/ s/,.*$/,.../' | $cmd | tablify
+done
