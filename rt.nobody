@@ -26,4 +26,4 @@ AUTHOR
     John Brunelle
 "
 
-rt.table "Owner=Nobody and Status!=resolved and LastUpdated>='-3 days' and Queue!=Documentation and Queue!=Infrastructure and Queue!=Network and Queue!=SPAM" "$@"  #conveniently, getopt accept options like --realnames even after an regular argument
+rt.table "Owner=Nobody and Status!=resolved and Status!=pend_close and Status!=waiting and LastUpdated>='-3 days' and Queue!=Documentation and Queue!=Infrastructure and Queue!=Network and Queue!=SPAM" "$@"  #conveniently, getopt accept options like --realnames even after an regular argument
