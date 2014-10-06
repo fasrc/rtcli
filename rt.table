@@ -86,5 +86,5 @@ else
 fi
 
 for qry in "$@"; do
-	rt ls -i "$qry" | xargs -r rt show -f id,Status,Priority,Requestors,Subject | sed 's?^id: ticket/?id: ?' | sed '/^Requestors/ s/,.*$/,.../' | $cmd | tablify
+	rt ls -o LastUpdated -i "$qry" | xargs -r rt show -f LastUpdated,id,Status,Priority,Requestors,Subject | sed 's?^id: ticket/?id: ?' | rt.sortabletimes | sed '/^Requestors/ s/,.*$/,.../' | $cmd | tablify
 done

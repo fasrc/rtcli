@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+
+"""\
+NAME
+    rt.sortabletimes - switch timestamps to something sortable
+
+SYNOPSIS
+    SOME_OTHER_RT_COMMAND | rt.sortabletimes
+
+DESCRIPTION
+	Currently only works for \`Created' and \`LastUpdated'.
+
+OPTIONS
+    -h, --help
+        Print this help.
+
+REQUIREMENTS
+	n/a
+
+AUTHOR
+    John Brunelle
+"""
+
+import sys, getopt, time
+
+add = False
+
+try:
+	opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ('help',))
+except getopt.GetoptError, e:
+	sys.stderr.write("*** ERROR **** unable to process command line options: %s\n" % e)
+	sys.exit(1)
+for opt, optarg in opts:
+	if opt in ('-h', '--help'):
+		sys.stdout.write(__doc__)
+		sys.exit(0)
+
+if sys.stdin.isatty():
+	sys.stderr.write("*** ERROR *** this script is only meant to be used in a pipeline\n")
+	sys.exit(1)
+
+#--
+
+files = []
+for f in args:
+	files.append(f.open())
+if len(files)==0: files.append(sys.stdin)
+	
+for f in files:
+	for line in f:
+		if line.startswith('Created:') or line.startswith('LastUpdated:'):
+			try:
+				field, tstr = line.split(':',1)
+				tstr = tstr.strip()
+
+				tt   = time.strptime(tstr, '%a %b %d %H:%M:%S %Y')
+				tstr = time.strftime('%Y-%m-%dT%H:%M', tt)
+
+
+				sys.stdout.write('%s: %s\n' % (field, tstr))
+			except ValueError:
+				raise
+				#bail out and just echo the original line
+				sys.stdout.write(line)
+		else:
+			sys.stdout.write(line)
