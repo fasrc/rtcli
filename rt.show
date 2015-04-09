@@ -64,7 +64,7 @@ set -u
 for tid in "$@"; do
 	echo "$tid"
 	echo '-----'
-	rt show ticket/"$tid" -f Requestors,Subject,Owner,Status,Priority,Created,LastUpdated | grep -v '^id: ticket' | rt.realnames --add
+	rt show ticket/"$tid" -f Requestors,Subject,Owner,Status,Queue,Priority,Created,LastUpdated | grep -v '^id: ticket' | rt.realnames --add
 
 	if $history; then
 		rt show ticket/"$tid"/history
