@@ -10,9 +10,9 @@ SYNOPSIS
 
 DESCRIPTION
     This is a thin wrapper for:
-        
+
         rt.table \"Owner=\$USER and Status != resolved\"
-    
+
     See rt.table -h for more info.
 
     Any additional QUERYies given are ANDed with the default.
@@ -27,4 +27,4 @@ AUTHOR
     John Brunelle
 "
 
-rt.table "Owner=$USER and Status!=resolved" "$@"  #conveniently, getopt accept options like --realnames even after an regular argument
+rt.table "Owner=$USER and Status!=resolved and Status!=resolvequiet and Status!=rejected" "$@"  #conveniently, getopt accept options like --realnames even after an regular argument
