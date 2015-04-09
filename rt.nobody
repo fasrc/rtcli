@@ -3,7 +3,7 @@ set -e
 
 helpstr="\
 NAME
-    rt.nobody - show a table of all recent tickets owned by Nobody
+    rt.nobody - show all recent unowned tickets in the general queue
 
 SYNOPSIS
     rt.nobody [QUERY...]
@@ -11,7 +11,7 @@ SYNOPSIS
 DESCRIPTION
     This is a thin wrapper for:
         rt.table \"Owner=Nobody and Status!=resolved and Queue!=SPAM and LastUpdated>='-3 days' and Queue!=Documentation and Queue!=Network\"
-        
+
     See rt.table -h for more info.
 
     Any additional QUERYies given are ANDed with the default.
@@ -26,4 +26,4 @@ AUTHOR
     John Brunelle
 "
 
-rt.table "Owner=Nobody and Status!=resolved and Status!=pend_close and Status!=waiting and LastUpdated>='-3 days' and Queue!=AccountRequest and Queue!=Network and Queue!=Infrastructure and Queue!=Documentation and Queue!=SPAM" "$@"  #conveniently, getopt accept options like --realnames even after an regular argument
+rt.table "Owner=Nobody and Status=new and Queue=General" "$@"  #conveniently, getopt accept options like --realnames even after an regular argument
