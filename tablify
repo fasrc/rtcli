@@ -135,5 +135,7 @@ try:
 				val = NA
 			line += '%-*s' % (width, val) + ' '*border_width
 		print line[:maxwidth]
+        if sys.stdout.isatty():
+                print 'Total: %d' % len(entries)
 except IOError, e:
 	if not (hasattr(e, 'errno') and e.errno==errno.EPIPE): raise
